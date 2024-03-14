@@ -1,18 +1,9 @@
-frontend www-http
+frontend http_frontend
     bind *:80
     mode http
-    default_backend web-backend
-frontend www-https
-    bind *:443 ssl crt /etc/haproxy/certs/Irenee.tech.pem
-    http-request set-header X-Forwarded-Proto https
-    acl letsencrypt-acl path_beg /.well-known/acme-challenge/
-    use_backend letsencrypt-backend if letsencrypt-acl
-    default_backend web-backend
+    option forwardfor
+    reqadd X-Forwarded-Proto:\ http
 
-backend web-backend
-    redirect scheme https unless { ssl_fc }
-    balance roundrobin
-    server 5978-web-01 54.237.227.170 check
-    server 5978-web-02 34.224.31.215 check
-backend letsencrypt-backend
-   server letsencrypt 127.0.0.1:54321
+    acl is_https hdr(Host) -i irenee.tech
+    redirect scheme https code 301 if !{ ssl_fc } is_https
+
